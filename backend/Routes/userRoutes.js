@@ -8,6 +8,8 @@ const nodemailer = require("nodemailer");
 require("../Database/connection/connectDb");
 const User = require("../Database/models/user");
 const cors = require("cors");
+const Medicine = require("../Database/models/medicine");
+const medicine = require("../Database/models/medicine");
 router.use(express.json());
 router.use(cors());
 
@@ -39,15 +41,19 @@ router.get("/user/:id", async (req, res) => {
 router.post("/register", async (req, res) => {
   if (req.body.password === req.body.confirmPassword) {
     try {
-      let result = new User(req.body);
-      await result.save();
+      const emailcheck =  await User.findOne({email : req.body.email});
+      console.log(emailcheck)
+      if(emailcheck){
+        return res.json({ message: "Email Already Exist" });
+      }
+      let result =await User.create(req.body);
       result = result.toObject();
       delete result.password;
       if (result) {
         const mailOPtions = {
           from: "support@caregrid.in",
           to: req.body.email,
-          subject: "Request for Reset Password",
+          subject: "Welcome to Caregrid",
           html: "<div><h2>Thanks! for using CareGrid.</h2><h3>Registered Successfully!!</h3></div>",
         };
         const send_mail = await transporter.sendMail(mailOPtions);
@@ -150,5 +156,10 @@ router.put("/reset_password/:email", async (req, res) => {
     res.status(404).json({ message: "passwords are not matching" });
   }
 });
+
+router.get('/medicines',async (req,res)=>{
+  const medicine=await Medicine.find();
+  res.send(medicine)
+})
 
 module.exports = router;
